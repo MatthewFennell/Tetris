@@ -1,5 +1,6 @@
 from tkinter import *
 import time
+import random
 
 ################################################################################################################################
 
@@ -9,8 +10,7 @@ right_line_location = 600                                                       
 cell_size = int((right_line_location - left_line_location)/grid_size)                                                               # how big each cell is
 canvas_height = 500                                                                                                                 # how far down the screen
 canvas_width = 700                                                                                                                  # how far across the screen
-grid = [[0]*grid_size for i in range(0,cell_size-1)] + [[1]*cell_size for i in range(0, 3)]
-
+grid = [[0]*grid_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 square_array = [[0]*grid_size for i in range(0, cell_size-1)]
 
 ################################################################################################################################
@@ -22,11 +22,7 @@ def move_blocks(label, shape):
         location = get_coords()
         row = int(location[0])
         column = int(location[1])
-        if grid[row][column] != 1:
-            #canv.move(shape, 0, grid_size)
-            move_down()
-        else:
-            move_down()
+        move_down()
         label.after(300,count)
     count()
 
@@ -38,10 +34,12 @@ def move_down():
     location = get_coords()
     row = int(location[0])
     column = int(location[1])
-    if grid[row][column] != 1:
+    if grid[row+1][column] != 1:
+        grid[row][column] = 0
         canv.move(box, 0, grid_size)
+        grid[row+1][column] = 1
     else:
-        box = canv.create_rectangle((left_line_location+right_line_location)/2, 0, (left_line_location+right_line_location)/2+grid_size,grid_size, fill = "green")
+       create_shape(10,0)
 
 ################################################################################################################################
 # return column / row co-ords of square
@@ -61,8 +59,10 @@ def move_left():
     location = get_coords()
     row = int(location[0])
     column = int(location[1])
-    if canv.coords(box)[0] > left_line_location:
+    if canv.coords(box)[0] > left_line_location and grid[row][column-1] == 0:
+        grid[row][column] = 0
         canv.move(box,-grid_size,0)
+        grid[row][column-1] = 1
 
 ################################################################################################################################
 # moves the square 1 right
@@ -72,8 +72,10 @@ def move_right():
     location = get_coords()
     row = int(location[0])
     column = int(location[1])
-    if canv.coords(box)[0] < right_line_location - cell_size*2:
+    if canv.coords(box)[0] < right_line_location - cell_size*2 and grid[row][column+1] == 0:
+        grid[row][column] = 0
         canv.move(box,grid_size,0)
+        grid[row][column+1] = 1
 
 ################################################################################################################################
 # tracks keyboard input
@@ -83,6 +85,8 @@ def callback(event):
         move_left()
     if event.keysym == 'd':
         move_right()
+    if event.keysym == 's':
+        move_down()
 
 #####################################################################################################################################
 # creates the board structure
@@ -97,13 +101,14 @@ def create_board():
     middle = canv.create_rectangle(left_line_location, 0, right_line_location, canvas_height, fill = "#2f2f2f")                         # the center area 
 
 ################################################################################################################################
-# creates a square shape at x,y
+# creates a square shape at x,y of random color
 
 def create_shape(x_coord, y_coord):
     global box
     x_location = x_coord * grid_size + left_line_location
     y_location = y_coord * grid_size
-    box = canv.create_rectangle(x_location, y_location, x_location + grid_size, y_location + grid_size, fill = "red")
+    colors = ["red", "orange", "yellow", "green", "blue", "violet"]
+    box = canv.create_rectangle(x_location, y_location, x_location + grid_size, y_location + grid_size, fill = random.choice(colors))
     
 ################################################################################################################################
 # starts the game
@@ -118,7 +123,7 @@ def start_game():
     create_shape(10,0)
     label = Label(root, text="Tetris")
     move_blocks(label,box)
-    root.title("counting seconds")
+    root.title("Tetris!")
     canv.bind("<1>", lambda event: canv.focus_set())
     canv.bind("<Key>", callback)
     canv.pack()
