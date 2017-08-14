@@ -4,14 +4,14 @@ import random
 
 ################################################################################################################################
 
-grid_size = 25                                                                                                                      # how big the grid is (N x N)
+grid_size = 25                                                                                                                      # how big each square is pixels
 left_line_location = 100                                                                                                            # how big the middle area is (left side)
 right_line_location = 600                                                                                                           # how big the middle area is (right side)
-cell_size = int((right_line_location - left_line_location)/grid_size)                                                               # how big each cell is
+cell_size = int((right_line_location - left_line_location)/grid_size)                                                               # the number of cells
 canvas_height = 500                                                                                                                 # how far down the screen
 canvas_width = 700                                                                                                                  # how far across the screen
-grid = [[0]*grid_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
-square_array = [[0]*grid_size for i in range(0, cell_size-1)]
+grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+square_array = [[0]*grid_size for i in range(0, cell_size)]
 
 ################################################################################################################################
 # Moves the block slowly down the screen
@@ -23,6 +23,7 @@ def move_blocks(label, shape):
         row = int(location[0])
         column = int(location[1])
         move_down()
+        check_row_complete(cell_size-1)
         label.after(300,count)
     count()
 
@@ -39,7 +40,36 @@ def move_down():
         canv.move(box, 0, grid_size)
         grid[row+1][column] = 1
     else:
-       create_shape(10,0)
+        square_array[row][column] = box
+        create_shape(10,0)
+################################################################################################################################
+# checks if a horizontal row is full
+
+def check_row_complete(row):
+    if row == 0:
+        print ("Finished")
+    else:
+        row_filled = True
+        for x in range(0, cell_size):
+            if grid[row][x] == 0:
+                row_filled = False
+        if row_filled:
+            delete_row(row)
+
+
+def delete_row(row):
+    for x in range(0, cell_size):
+        grid[row][x] = 0
+        current_square = square_array[row][x]
+        canv.delete(current_square)
+    
+    # lets the squares fall (only fall down 1 row currently)
+    for x in range(0, cell_size):
+        if grid[row-1][x] == 1:
+            current_square = square_array[row-1][x]
+            canv.move(current_square,0, grid_size)
+            grid[row-1][x] = 0
+            grid[row][x] = 1
 
 ################################################################################################################################
 # return column / row co-ords of square
