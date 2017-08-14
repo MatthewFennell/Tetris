@@ -1,6 +1,7 @@
 from tkinter import *
 import time
 import random
+from random import randint
 
 ################################################################################################################################
 
@@ -12,6 +13,64 @@ canvas_height = 500                                                             
 canvas_width = 700                                                                                                                  # how far across the screen
 grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 square_array = [[0]*grid_size for i in range(0, cell_size)]
+
+# straight line length 4
+shape_one =   [[1,0,0,0],
+               [1,0,0,0],
+               [1,0,0,0],
+               [1,0,0,0]]
+
+shape_two =   [[1,0,0,0],
+               [1,0,0,0],
+               [1,1,0,0],
+               [0,0,0,0]]
+
+shape_three = [[0,1,0,0],
+               [0,1,0,0],
+               [1,1,0,0],
+               [0,0,0,0]]
+
+shape_four =  [[1,1,0,0],
+               [1,1,0,0],
+               [0,0,0,0],
+               [0,0,0,0]]
+
+shape_five =  [[1,1,0,0],
+               [0,1,1,0],
+               [0,0,0,0],
+               [0,0,0,0]]
+
+shape_six   = [[0,1,1,0],
+               [1,1,0,0],
+               [0,0,0,0],
+               [0,0,0,0]]
+
+shape_seven = [[1,1,1,0],
+               [0,1,0,0],
+               [0,0,0,0],
+               [0,0,0,0]]
+
+possible_shapes = [shape_one, shape_two, shape_three, shape_four, shape_five, shape_six, shape_seven]
+
+def select_random_shape():
+    chosen_shape = possible_shapes[randint(0,6)]
+    return chosen_shape
+
+# draws a chosen shape at the top of the screen
+def draw_chosen_shape(shape, x_coord, y_coord):
+    colors = ["red", "orange", "yellow", "green", "blue", "violet"]
+    choice = colors[randint(0, 5)]
+
+    x_location = x_coord * grid_size + left_line_location
+    y_location = y_coord * grid_size
+
+    for row in range(0, 4):
+        for column in range(0, 4):
+            if shape[row][column] == 1:
+                 box = canv.create_rectangle(x_location+grid_size*column,y_location+grid_size*row,x_location+grid_size+grid_size*column,y_location+grid_size+grid_size*row,fill=choice)
+                 co_ords = get_coordinates(box)
+                 square_array[co_ords[1]][co_ords[0]] = box
+                 grid[co_ords[1]][co_ords[0]] = 2
 
 ################################################################################################################################
 # Moves the block slowly down the screen
@@ -73,6 +132,13 @@ def delete_row(row):
 
 ################################################################################################################################
 # return column / row co-ords of square
+
+def get_coordinates(shape):                                                                                                             
+    x_one, y_one, x_two, y_two = canv.coords(shape)
+    x_coord = int((x_one - left_line_location)/grid_size)
+    y_coord = int(y_one / grid_size)
+    return [y_coord, x_coord]
+
 
 def get_coords():                                                                                                             
     global box
@@ -150,6 +216,11 @@ def start_game():
     canv = Canvas(root, width = canvas_width, height = canvas_height, highlightthickness=0)
     canv.pack(fill='both', expand=True)                                                                            # the screen layout
     create_board()
+
+    test = select_random_shape()
+    draw_chosen_shape(test, 10,0)
+
+
     create_shape(10,0)
     label = Label(root, text="Tetris")
     move_blocks(label,box)
