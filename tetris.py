@@ -84,8 +84,8 @@ def move_blocks(label):
       #  column = int(location[1])
        # move_down()
        # move_shape_down()
-        for x in range(cell_size-1,-1,-1):
-            check_row_complete(x)
+       # for x in range(cell_size-1,-1,-1):
+        #    check_row_complete(x)
         move_shape_down()
         label.after(600,count)
         find_matrix()
@@ -130,7 +130,11 @@ def move_shape_down():
             for column in range(0, cell_size):
                 if grid[row][column] == 2:
                     grid[row][column] = 1
-    
+        
+        for y in range(0, 4):
+            for x in range(cell_size-1,-1,-1):
+                check_row_complete(x)
+
         test = select_random_shape()
         draw_chosen_shape(test, 4, 0)
 
