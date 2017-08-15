@@ -2,7 +2,8 @@ from tkinter import *
 import time
 import random
 from random import randint
-import numpy as np
+import winsound
+import pygame
 
 ################################################################################################################################
 
@@ -458,6 +459,12 @@ def rotate_shape_left():
 
     return shape
 
+def draw_lines():
+    
+    for column in range(0, cell_size):
+        canv.create_line(left_line_location + column * grid_size, 0, left_line_location + column * grid_size, canvas_height, fill = "black", width = 1)
+        canv.create_line(left_line_location, column * grid_size, right_line_location, column * grid_size, fill = "black", width = 1)
+
 
 def start_game():
     global box
@@ -466,6 +473,7 @@ def start_game():
     canv = Canvas(root, width = canvas_width, height = canvas_height, highlightthickness=0)
     canv.pack(fill='both', expand=True)                                                                            # the screen layout
     create_board()
+    draw_lines()
 
     test = select_random_shape()
     draw_chosen_shape(test, 10,0)
@@ -479,7 +487,6 @@ def start_game():
     canv.pack()
     root.mainloop()
 
-#rotate_shape()
 start_game()
 
 
