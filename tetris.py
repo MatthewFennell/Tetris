@@ -69,25 +69,69 @@ def draw_chosen_shape(shape, x_coord, y_coord):
             if shape[row][column] == 1:
                  box = canv.create_rectangle(x_location+grid_size*column,y_location+grid_size*row,x_location+grid_size+grid_size*column,y_location+grid_size+grid_size*row,fill=choice)
                  co_ords = get_coordinates(box)
-                 square_array[co_ords[1]][co_ords[0]] = box
-                 grid[co_ords[1]][co_ords[0]] = 2
+                 square_array[co_ords[0]][co_ords[1]] = box
+                 grid[co_ords[0]][co_ords[1]] = 2
+
 
 ################################################################################################################################
 # Moves the block slowly down the screen
 
-def move_blocks(label, shape):
+def move_blocks(label):
     global box
     def count():
-        location = get_coords()
-        row = int(location[0])
-        column = int(location[1])
-        move_down()
-        check_row_complete(cell_size-1)
-        label.after(300,count)
+    #    location = get_coords()
+     #   row = int(location[0])
+      #  column = int(location[1])
+       # move_down()
+       # move_shape_down()
+        for x in range(cell_size-1,-1,-1):
+            check_row_complete(x)
+        move_shape_down()
+        label.after(600,count)
     count()
 
 ################################################################################################################################
 # moves the square 1 down
+
+
+def move_shape_down():
+    can_move = True
+    # check if all parts of shape are able to be moved down
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if grid[row][column] == 2:
+                if grid[row+1][column] == 1:
+                    can_move = False
+
+    dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
+    dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+
+
+    if can_move:
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if grid[row][column] == 2:
+                    current_square = square_array[row][column]
+                    canv.move(current_square, 0, grid_size)
+                    dummy_square_array[row+1][column] = current_square
+                    dummy_grid[row+1][column] = 2
+                    grid[row][column] = 0
+                    square_array[row][column] = 0
+
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if dummy_grid[row][column] == 2:
+                   grid[row][column] = 2
+                   square_array[row][column] = dummy_square_array[row][column]
+
+    else:
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if grid[row][column] == 2:
+                    grid[row][column] = 1
+    
+        test = select_random_shape()
+        draw_chosen_shape(test, 4, 0)
 
 def move_down():
     global box
@@ -100,13 +144,13 @@ def move_down():
         grid[row+1][column] = 1
     else:
         square_array[row][column] = box
-        create_shape(10,0)
+        #create_shape(10,0)
 ################################################################################################################################
 # checks if a horizontal row is full
 
 def check_row_complete(row):
     if row == 0:
-        print ("Finished")
+        pass
     else:
         row_filled = True
         for x in range(0, cell_size):
@@ -115,21 +159,36 @@ def check_row_complete(row):
         if row_filled:
             delete_row(row)
 
+# deletes a row
 
 def delete_row(row):
     for x in range(0, cell_size):
         grid[row][x] = 0
         current_square = square_array[row][x]
         canv.delete(current_square)
-    
-    # lets the squares fall (only fall down 1 row currently)
-    for x in range(0, cell_size):
-        if grid[row-1][x] == 1:
-            current_square = square_array[row-1][x]
-            canv.move(current_square,0, grid_size)
-            grid[row-1][x] = 0
-            grid[row][x] = 1
+    move_everything_down(row)
 
+def move_everything_down(row_limit):
+    dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
+    dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+    
+    for row in range(0, row_limit):
+        for column in range(0, cell_size):
+            if grid[row][column] == 1:
+                dummy_square_array[row+1][column] = square_array[row][column]
+                dummy_grid[row+1][column] = grid[row][column]
+            if grid[row][column] == 2:
+                dummy_grid[row][column] = 2
+            if grid[row][column] == 1:
+                current_square = square_array[row][column]
+                canv.move(current_square, 0, grid_size)
+
+    for row in range(0, row_limit+1):
+        for column in range(0, cell_size):
+            if dummy_grid[row][column] == 1 or dummy_grid[row][column] == 0:
+                grid[row][column] = dummy_grid[row][column]
+                square_array[row][column] = dummy_square_array[row][column]
+   
 ################################################################################################################################
 # return column / row co-ords of square
 
@@ -149,6 +208,68 @@ def get_coords():
 
 ################################################################################################################################
 # moves the square 1 left
+
+def move_shape_left():
+    dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
+    dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+
+    can_move = True
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if grid[row][column] == 2:
+                if grid[row][column-1] == 1 or column == 0:
+                    can_move = False 
+
+
+    if can_move:
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if grid[row][column] == 2:
+                    current_square = square_array[row][column]
+                    canv.move(current_square, -grid_size, 0)
+                    dummy_square_array[row][column-1] = current_square
+                    dummy_grid[row][column-1] = 2
+                    grid[row][column] = 0
+                    square_array[row][column] = 0
+
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if dummy_grid[row][column] == 2:
+                   grid[row][column] = 2
+                   square_array[row][column] = dummy_square_array[row][column]
+
+def move_shape_right():
+    dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
+    dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+
+    can_move = True
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if grid[row][column] == 2:
+                if column == cell_size-1:
+                    can_move = False
+                elif grid[row][column+1] == 1 or column == cell_size:
+                    can_move = False 
+
+
+    if can_move:
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if grid[row][column] == 2:
+                    current_square = square_array[row][column]
+                    canv.move(current_square, grid_size, 0)
+                    dummy_square_array[row][column+1] = current_square
+                    dummy_grid[row][column+1] = 2
+                    grid[row][column] = 0
+                    square_array[row][column] = 0
+
+        for row in range(0, cell_size):
+            for column in range(0, cell_size):
+                if dummy_grid[row][column] == 2:
+                   grid[row][column] = 2
+                   square_array[row][column] = dummy_square_array[row][column]
+
+
 
 def move_left():
     global box
@@ -178,11 +299,14 @@ def move_right():
 
 def callback(event):
     if event.keysym == 'a':
-        move_left()
+    #    move_left()
+        move_shape_left()
     if event.keysym == 'd':
-        move_right()
+     #   move_right()
+        move_shape_right()
     if event.keysym == 's':
-        move_down()
+      #  move_down()
+        move_shape_down()
 
 #####################################################################################################################################
 # creates the board structure
@@ -221,9 +345,9 @@ def start_game():
     draw_chosen_shape(test, 10,0)
 
 
-    create_shape(10,0)
+    #create_shape(1,5)
     label = Label(root, text="Tetris")
-    move_blocks(label,box)
+    move_blocks(label)
     root.title("Tetris!")
     canv.bind("<1>", lambda event: canv.focus_set())
     canv.bind("<Key>", callback)
