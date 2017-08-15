@@ -2,6 +2,7 @@ from tkinter import *
 import time
 import random
 from random import randint
+import numpy as np
 
 ################################################################################################################################
 
@@ -49,7 +50,6 @@ shape_seven = [[1,1,1,0],
                [0,1,0,0],
                [0,0,0,0],
                [0,0,0,0]]
-
 possible_shapes = [shape_one, shape_two, shape_three, shape_four, shape_five, shape_six, shape_seven]
 
 def select_random_shape():
@@ -88,6 +88,7 @@ def move_blocks(label):
             check_row_complete(x)
         move_shape_down()
         label.after(600,count)
+        find_matrix()
     count()
 
 ################################################################################################################################
@@ -307,6 +308,8 @@ def callback(event):
     if event.keysym == 's':
       #  move_down()
         move_shape_down()
+    if event.keysym == 'w':
+        rotate_shape_left()
 
 #####################################################################################################################################
 # creates the board structure
@@ -333,6 +336,125 @@ def create_shape(x_coord, y_coord):
 ################################################################################################################################
 # starts the game
 
+# finds the matrix that matches the current shape
+def find_matrix():
+
+    smallest_x = cell_size
+    largest_x = 0
+
+    smallest_y = cell_size
+    largest_y = 0
+
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if grid[row][column] == 2:
+                if column < smallest_x:
+                    smallest_x = column
+                if column > largest_x:
+                    largest_x = column
+
+                if row < smallest_y:
+                    smallest_y = row
+                if row > largest_y:
+                    largest_y = row
+
+    shape_matrix =[[0,0,0,0],
+                   [0,0,0,0],
+                   [0,0,0,0],
+                   [0,0,0,0]]
+
+
+    for row in range(smallest_y, smallest_y+4):
+        for column in range(smallest_x, smallest_x+4):
+            if row < cell_size and column < cell_size:
+                if grid[row][column] == 2:
+                    shape_matrix[row - smallest_y][column - smallest_x] = 1
+
+    
+    all_zero = True
+    
+    for x in range(0, 4):
+        if shape_matrix[3][x] != 0:
+            all_zero = False
+        if shape_matrix[x][3] != 0:
+            all_zero = False
+
+    if all_zero:
+        shape_matrix.pop(-1)
+        for row in range(0, 3):
+            shape_matrix[row].pop(-1)
+
+
+    if shape_matrix[0][0] == 1 and shape_matrix[0][1] == 1 and shape_matrix[1][0] == 1 and shape_matrix[1][1] == 1:
+        shape_matrix.pop(-1)
+        shape_matrix[0].pop(-1)
+        shape_matrix[1].pop(-1)
+
+    return shape_matrix
+    
+def rotate_shape_left():
+
+    original_shape = find_matrix()
+    shape = find_matrix()
+
+    new_shape = list(zip(*shape[::-1]))
+
+    for x in range(0, len(shape[0])):
+        for y in range(0, len(shape[0])):
+            shape[x][y] = new_shape[x][y]
+
+    dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
+    dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
+
+    smallest_x = cell_size
+    smallest_y = cell_size
+
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if grid[row][column] == 2:
+                if column < smallest_x:
+                    smallest_x = column
+
+                if row < smallest_y:
+                    smallest_y = row
+
+    for row in range(smallest_y, smallest_y + len(shape[0])):
+        for column in range(smallest_x, smallest_x + len(shape[0])):
+            if shape[row-smallest_y][column-smallest_x] == 1:
+                dummy_grid[row][column] = 2
+
+
+    for row in range(smallest_y, smallest_y + len(shape[0])):
+        for column in range(smallest_x, smallest_x + len(shape[0])):
+            if grid[row][column] == 2:
+                replaced = False
+                for row_dummy in range(smallest_y, smallest_y + len(shape[0])):
+                    for column_dummy in range(smallest_x, smallest_x + len(shape[0])):
+                        if replaced == False:
+                            if dummy_grid[row_dummy][column_dummy] == 2:
+                                x_difference = row_dummy - row
+                                y_difference = column_dummy - column
+                                #print ("The difference in x = " + str(x_difference) + " and in y is " + str(y_difference))
+                                #print ("The value at (" + str(row) + "," + str(column) + ") maps to (" + str(row_dummy) + "," + str(column_dummy) + ")")
+                                dummy_grid[row_dummy][column_dummy] = 3
+                                grid[row][column] = 0
+                                replaced = True
+                                canv.move(square_array[row][column], grid_size * y_difference, grid_size * x_difference)
+                                #print ("Moving the shape at (" + str(row) + ", " + str(column) + ") " + str(x_difference) + " cells right and " + str(y_difference) + " cells down")
+                                #print ("")
+                                dummy_square_array[row_dummy][column_dummy] = square_array[row][column]
+                                square_array[row][column] = 0
+                    
+
+    for row in range(0, cell_size):
+        for column in range(0, cell_size):
+            if dummy_grid[row][column] == 3:
+                grid[row][column] = 2
+                square_array[row][column] = dummy_square_array[row][column]
+
+    return shape
+
+
 def start_game():
     global box
     global canv
@@ -344,7 +466,6 @@ def start_game():
     test = select_random_shape()
     draw_chosen_shape(test, 10,0)
 
-
     #create_shape(1,5)
     label = Label(root, text="Tetris")
     move_blocks(label)
@@ -354,6 +475,7 @@ def start_game():
     canv.pack()
     root.mainloop()
 
+#rotate_shape()
 start_game()
 
 
