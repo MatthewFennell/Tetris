@@ -2,19 +2,20 @@ from tkinter import *
 import time
 import random
 from random import randint
-import winsound
-import pygame
 
 ################################################################################################################################
-
+global score 
+global text_value
+score = 0
 grid_size = 25                                                                                                                      # how big each square is pixels
-left_line_location = 100                                                                                                            # how big the middle area is (left side)
-right_line_location = 600                                                                                                           # how big the middle area is (right side)
+left_line_location = 200                                                                                                            # how big the middle area is (left side)
+right_line_location = 700                                                                                                           # how big the middle area is (right side)
 cell_size = int((right_line_location - left_line_location)/grid_size)                                                               # the number of cells
 canvas_height = 500                                                                                                                 # how far down the screen
-canvas_width = 700                                                                                                                  # how far across the screen
+canvas_width = 900                                                                                                                  # how far across the screen
 grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 square_array = [[0]*grid_size for i in range(0, cell_size)]
+################################################################################################################################
 
 # straight line length 4
 shape_one =   [[1,0,0,0],
@@ -51,10 +52,27 @@ shape_seven = [[1,1,1,0],
                [0,1,0,0],
                [0,0,0,0],
                [0,0,0,0]]
+
+shape_eight = [[1,0,0,1],
+               [0,1,1,0],
+               [0,1,1,0],
+               [1,0,0,1]]
+
+
 possible_shapes = [shape_one, shape_two, shape_three, shape_four, shape_five, shape_six, shape_seven]
+################################################################################################################################
+
+
+def text(increase):
+    global score
+    global text_value
+    canv.delete(text_value)
+    score = score + increase
+    text_value = canv.create_text((canvas_width+right_line_location)/2,30,fill="white",font="Times 20 italic bold",text="Score = " + str(score))
+    canv.update
 
 def select_random_shape():
-    chosen_shape = possible_shapes[randint(0,6)]
+    chosen_shape = possible_shapes[randint(0,len(possible_shapes)-1)]
     return chosen_shape
 
 # draws a chosen shape at the top of the screen
@@ -78,17 +96,9 @@ def draw_chosen_shape(shape, x_coord, y_coord):
 # Moves the block slowly down the screen
 
 def move_blocks(label):
-    global box
     def count():
-    #    location = get_coords()
-     #   row = int(location[0])
-      #  column = int(location[1])
-       # move_down()
-       # move_shape_down()
-       # for x in range(cell_size-1,-1,-1):
-        #    check_row_complete(x)
         move_shape_down()
-        label.after(600,count)
+        label.after(300,count)
         find_matrix()
     count()
 
@@ -108,7 +118,7 @@ def move_shape_down():
     dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
     dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 
-
+    # if it can move, store new values into temporary array
     if can_move:
         for row in range(0, cell_size):
             for column in range(0, cell_size):
@@ -120,6 +130,7 @@ def move_shape_down():
                     grid[row][column] = 0
                     square_array[row][column] = 0
 
+    # reassign the values
         for row in range(0, cell_size):
             for column in range(0, cell_size):
                 if dummy_grid[row][column] == 2:
@@ -127,32 +138,25 @@ def move_shape_down():
                    square_array[row][column] = dummy_square_array[row][column]
 
     else:
+        # if it can't move, set the active shape values (2) to non active (1)
         for row in range(0, cell_size):
             for column in range(0, cell_size):
                 if grid[row][column] == 2:
                     grid[row][column] = 1
-        
+        # check for complete rows (4 times as max number is 4)
+        a = 0 # number of rows deleted at once
         for y in range(0, 4):
             for x in range(cell_size-1,-1,-1):
-                check_row_complete(x)
+                a += check_row_complete(x)
+        if a > 0:
+            text(10 + (20*(a-1)))
+        # since it can't move down anymore, must spawn another shape
+        new_shape = select_random_shape()
+        draw_chosen_shape(new_shape, (right_line_location-left_line_location)/(2*grid_size)-1 , 0)
+        text(1)
 
-        test = select_random_shape()
-        draw_chosen_shape(test, 4, 0)
-
-def move_down():
-    global box
-    location = get_coords()
-    row = int(location[0])
-    column = int(location[1])
-    if grid[row+1][column] != 1:
-        grid[row][column] = 0
-        canv.move(box, 0, grid_size)
-        grid[row+1][column] = 1
-    else:
-        square_array[row][column] = box
-        #create_shape(10,0)
 ################################################################################################################################
-# checks if a horizontal row is full
+# checks if a horizontal row is full and deletes it if it's full
 
 def check_row_complete(row):
     if row == 0:
@@ -164,20 +168,27 @@ def check_row_complete(row):
                 row_filled = False
         if row_filled:
             delete_row(row)
+            return 1
+    return 0
 
 # deletes a row
 
 def delete_row(row):
+    # set all values to 0
+    # then move everything above it down 1
     for x in range(0, cell_size):
         grid[row][x] = 0
         current_square = square_array[row][x]
         canv.delete(current_square)
     move_everything_down(row)
 
+# moves everything above row_limit down 1
 def move_everything_down(row_limit):
+    # create temporary arrays to store in
     dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
     dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
     
+    # up to row_limit, move all peices down 1 -> store in temporary array
     for row in range(0, row_limit):
         for column in range(0, cell_size):
             if grid[row][column] == 1:
@@ -189,6 +200,8 @@ def move_everything_down(row_limit):
                 current_square = square_array[row][column]
                 canv.move(current_square, 0, grid_size)
 
+    # reassign the temporary array
+    # avoids overwriting data
     for row in range(0, row_limit+1):
         for column in range(0, cell_size):
             if dummy_grid[row][column] == 1 or dummy_grid[row][column] == 0:
@@ -205,20 +218,16 @@ def get_coordinates(shape):
     return [y_coord, x_coord]
 
 
-def get_coords():                                                                                                             
-    global box
-    x_one, y_one, x_two, y_two = canv.coords(box)
-    x_coord = (x_one - left_line_location)/grid_size
-    y_coord = y_one / grid_size
-    return [y_coord, x_coord]
-
 ################################################################################################################################
 # moves the square 1 left
 
 def move_shape_left():
+
+    # create temporary arrays to store grid data in
     dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
     dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 
+    # check if it's possible to move each part of the shape
     can_move = True
     for row in range(0, cell_size):
         for column in range(0, cell_size):
@@ -226,7 +235,7 @@ def move_shape_left():
                 if grid[row][column-1] == 1 or column == 0:
                     can_move = False 
 
-
+    # if it can be moved, move it into a temporary array (both the grid and square)
     if can_move:
         for row in range(0, cell_size):
             for column in range(0, cell_size):
@@ -238,12 +247,14 @@ def move_shape_left():
                     grid[row][column] = 0
                     square_array[row][column] = 0
 
+    # transfer the temporary values back
         for row in range(0, cell_size):
             for column in range(0, cell_size):
                 if dummy_grid[row][column] == 2:
                    grid[row][column] = 2
                    square_array[row][column] = dummy_square_array[row][column]
 
+# same as move left, but right
 def move_shape_right():
     dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
     dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
@@ -274,47 +285,18 @@ def move_shape_right():
                 if dummy_grid[row][column] == 2:
                    grid[row][column] = 2
                    square_array[row][column] = dummy_square_array[row][column]
-
-
-
-def move_left():
-    global box
-    location = get_coords()
-    row = int(location[0])
-    column = int(location[1])
-    if canv.coords(box)[0] > left_line_location and grid[row][column-1] == 0:
-        grid[row][column] = 0
-        canv.move(box,-grid_size,0)
-        grid[row][column-1] = 1
-
-################################################################################################################################
-# moves the square 1 right
-
-def move_right():
-    global box
-    location = get_coords()
-    row = int(location[0])
-    column = int(location[1])
-    if canv.coords(box)[0] < right_line_location - cell_size*2 and grid[row][column+1] == 0:
-        grid[row][column] = 0
-        canv.move(box,grid_size,0)
-        grid[row][column+1] = 1
-
 ################################################################################################################################
 # tracks keyboard input
 
 def callback(event):
     if event.keysym == 'a':
-    #    move_left()
         move_shape_left()
     if event.keysym == 'd':
-     #   move_right()
         move_shape_right()
     if event.keysym == 's':
-      #  move_down()
         move_shape_down()
     if event.keysym == 'w':
-        rotate_shape_left()
+        rotate_left()
 
 #####################################################################################################################################
 # creates the board structure
@@ -329,21 +311,11 @@ def create_board():
     middle = canv.create_rectangle(left_line_location, 0, right_line_location, canvas_height, fill = "#2f2f2f")                         # the center area 
 
 ################################################################################################################################
-# creates a square shape at x,y of random color
-
-def create_shape(x_coord, y_coord):
-    global box
-    x_location = x_coord * grid_size + left_line_location
-    y_location = y_coord * grid_size
-    colors = ["red", "orange", "yellow", "green", "blue", "violet"]
-    box = canv.create_rectangle(x_location, y_location, x_location + grid_size, y_location + grid_size, fill = random.choice(colors))
-    
-################################################################################################################################
-# starts the game
 
 # finds the matrix that matches the current shape
 def find_matrix():
 
+    # find the smallest and largest x/y values
     smallest_x = cell_size
     largest_x = 0
 
@@ -363,19 +335,23 @@ def find_matrix():
                 if row > largest_y:
                     largest_y = row
 
+    # initialise the shape matrix
     shape_matrix =[[0,0,0,0],
                    [0,0,0,0],
                    [0,0,0,0],
                    [0,0,0,0]]
 
-
+    # search only the small region where the active shape could possibly be
+    # maximum 4x4 size
+    # set shape_matrix value to equal those of the active shape where it = 2
     for row in range(smallest_y, smallest_y+4):
         for column in range(smallest_x, smallest_x+4):
             if row < cell_size and column < cell_size:
                 if grid[row][column] == 2:
                     shape_matrix[row - smallest_y][column - smallest_x] = 1
 
-    
+    # chop off the end bits of the shape matrix if unnecessary
+    # as they affect the rotation
     all_zero = True
     
     for x in range(0, 4):
@@ -389,28 +365,60 @@ def find_matrix():
         for row in range(0, 3):
             shape_matrix[row].pop(-1)
 
-
+    # make it 2x2 if it's the square shape
     if shape_matrix[0][0] == 1 and shape_matrix[0][1] == 1 and shape_matrix[1][0] == 1 and shape_matrix[1][1] == 1:
         shape_matrix.pop(-1)
         shape_matrix[0].pop(-1)
         shape_matrix[1].pop(-1)
 
     return shape_matrix
-    
-def rotate_shape_left():
+ ################################################################################################################################
+   
+def rotate_left():
 
-    original_shape = find_matrix()
+    # get an array of the active shape
     shape = find_matrix()
+    dummy = find_matrix()
 
+    print ("original shape")
+    for x in shape:
+        print (x)
+    print ("")
+
+    # rotate it (magic)
     new_shape = list(zip(*shape[::-1]))
 
+    # reassign it back
     for x in range(0, len(shape[0])):
         for y in range(0, len(shape[0])):
             shape[x][y] = new_shape[x][y]
 
+    # check to see if the left most column is all 0 
+    # this section stops rotation to move it sideways
+    for z in range(0,3):
+        first_column_all_zero = True
+        for x in range(0, len(shape[0])):
+            if shape[x][0] != 0:
+                first_column_all_zero = False
+
+        # if it is all 0, then shift everything in the shape to the left one
+        # loops through this 3 times as that's the most anything could be shifted left
+        if first_column_all_zero:
+            for row in range(0, len(shape[0])):
+                for column in range(1, len(shape[0])):
+                    dummy[row][column-1] = shape[row][column]
+                dummy[row][len(shape[0])-1] = 0
+    
+            # reassign shape back
+            for row in range(0, len(shape[0])):
+                for column in range(0, len(shape[0])):
+                    shape[row][column] = dummy[row][column]
+
+    # temporary arrays to store the new rotated values in
     dummy_square_array = [[0]*grid_size for i in range(0, cell_size)]
     dummy_grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 
+    # find the smallest x and y value (top left corner) of active shape
     smallest_x = cell_size
     smallest_y = cell_size
 
@@ -423,12 +431,19 @@ def rotate_shape_left():
                 if row < smallest_y:
                     smallest_y = row
 
+    # search the small square region where the active shape is
+    # if it is a block, set the dummy grid value at that location = 2
     for row in range(smallest_y, smallest_y + len(shape[0])):
         for column in range(smallest_x, smallest_x + len(shape[0])):
             if shape[row-smallest_y][column-smallest_x] == 1:
                 dummy_grid[row][column] = 2
-
-
+    
+    # pair up the old co-ordinates with the new ones
+    # 1 ) find part of the original shape
+    # 2 ) find a part of the new rotated shape (stored in the dummy arrays)
+    # 3 ) find the difference in co-ordinates between them
+    # 4 ) move the original shape to the new location
+    # 5 ) update the values so that these are not paired again and the remaining squares are selected
     for row in range(smallest_y, smallest_y + len(shape[0])):
         for column in range(smallest_x, smallest_x + len(shape[0])):
             if grid[row][column] == 2:
@@ -450,35 +465,38 @@ def rotate_shape_left():
                                 dummy_square_array[row_dummy][column_dummy] = square_array[row][column]
                                 square_array[row][column] = 0
                     
-
+    # reassigns the dummy arrays back to the true arrays
     for row in range(0, cell_size):
         for column in range(0, cell_size):
             if dummy_grid[row][column] == 3:
                 grid[row][column] = 2
                 square_array[row][column] = dummy_square_array[row][column]
 
+    
+    
+
     return shape
+################################################################################################################################
+# draws the grid lines
 
 def draw_lines():
-    
     for column in range(0, cell_size):
         canv.create_line(left_line_location + column * grid_size, 0, left_line_location + column * grid_size, canvas_height, fill = "black", width = 1)
         canv.create_line(left_line_location, column * grid_size, right_line_location, column * grid_size, fill = "black", width = 1)
-
+################################################################################################################################
+# starts the game
 
 def start_game():
-    global box
     global canv
+    global text_value
     root = Tk()
     canv = Canvas(root, width = canvas_width, height = canvas_height, highlightthickness=0)
     canv.pack(fill='both', expand=True)                                                                            # the screen layout
     create_board()
+    text_value = canv.create_text((canvas_width+right_line_location)/2,30,fill="white",font="Times 20 italic bold",text="Score = " + str(score))
     draw_lines()
-
-    test = select_random_shape()
-    draw_chosen_shape(test, 10,0)
-
-    #create_shape(1,5)
+    starter = select_random_shape()
+    draw_chosen_shape(starter, (right_line_location-left_line_location)/(2*grid_size)-1 ,0)
     label = Label(root, text="Tetris")
     move_blocks(label)
     root.title("Tetris!")
@@ -486,6 +504,7 @@ def start_game():
     canv.bind("<Key>", callback)
     canv.pack()
     root.mainloop()
+################################################################################################################################
 
 start_game()
 
