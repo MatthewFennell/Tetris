@@ -15,6 +15,32 @@ canvas_height = 500                                                             
 canvas_width = 900                                                                                                                  # how far across the screen
 grid = [[0]*cell_size for i in range(0,cell_size)] + [[1]*cell_size for i in range(0, 1)]
 square_array = [[0]*grid_size for i in range(0, cell_size)]
+next_shapes = [0,0,0]
+next_colours = [0,0,0]
+
+side_shape_one = [[0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0]]
+
+
+side_shape_two = [[0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0],
+                  [0,0,0,0]]
+
+
+side_shape_three = [[0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0]]
+
+
+
+
+
+
+
 ################################################################################################################################
 
 # straight line length 4
@@ -58,9 +84,44 @@ shape_eight = [[1,0,0,1],
                [0,1,1,0],
                [1,0,0,1]]
 
-
 possible_shapes = [shape_one, shape_two, shape_three, shape_four, shape_five, shape_six, shape_seven]
+colors = ["red", "orange", "yellow", "green", "blue", "violet"]
+for x in range(0, 3):
+    next_shapes[x] = randint(0, len(possible_shapes)-1)
+    next_colours[x] = randint(0, len(colors)-1)
 ################################################################################################################################
+
+
+def draw_next_shapes():
+
+    for row in range(0, 4):
+        for column in range(0, 4):
+            canv.delete(side_shape_one[row][column])
+            canv.delete(side_shape_two[row][column])
+            canv.delete(side_shape_three[row][column])
+
+    for shape_number in range(0, 3):
+
+        shape = possible_shapes[next_shapes[shape_number]]
+
+        
+        
+        x = (canvas_width + right_line_location) / 2 - grid_size
+        y = 100 + 130 * shape_number
+
+        for row in range(0, len(shape)):
+            for column in range(0, 4):
+                if shape[row][column] == 1:
+                    side_shape = canv.create_rectangle(x+grid_size*column,y+grid_size*row,x+grid_size+grid_size*column,y+grid_size+grid_size*row,fill=colors[next_colours[shape_number]])
+                    
+                    if shape_number == 0:
+                        side_shape_one[row][column] = side_shape
+                    if shape_number == 1:
+                        side_shape_two[row][column] = side_shape
+                    if shape_number == 2:
+                        side_shape_three[row][column] = side_shape
+
+
 
 
 def text(increase):
@@ -76,9 +137,7 @@ def select_random_shape():
     return chosen_shape
 
 # draws a chosen shape at the top of the screen
-def draw_chosen_shape(shape, x_coord, y_coord):
-    colors = ["red", "orange", "yellow", "green", "blue", "violet"]
-    choice = colors[randint(0, 5)]
+def draw_chosen_shape(shape, x_coord, y_coord, color):
 
     x_location = x_coord * grid_size + left_line_location
     y_location = y_coord * grid_size
@@ -86,7 +145,7 @@ def draw_chosen_shape(shape, x_coord, y_coord):
     for row in range(0, 4):
         for column in range(0, 4):
             if shape[row][column] == 1:
-                 box = canv.create_rectangle(x_location+grid_size*column,y_location+grid_size*row,x_location+grid_size+grid_size*column,y_location+grid_size+grid_size*row,fill=choice)
+                 box = canv.create_rectangle(x_location+grid_size*column,y_location+grid_size*row,x_location+grid_size+grid_size*column,y_location+grid_size+grid_size*row,fill=color)
                  co_ords = get_coordinates(box)
                  square_array[co_ords[0]][co_ords[1]] = box
                  grid[co_ords[0]][co_ords[1]] = 2
@@ -151,9 +210,13 @@ def move_shape_down():
         if a > 0:
             text(10 + (20*(a-1)))
         # since it can't move down anymore, must spawn another shape
-        new_shape = select_random_shape()
-        draw_chosen_shape(new_shape, (right_line_location-left_line_location)/(2*grid_size)-1 , 0)
+        draw_chosen_shape(possible_shapes[next_shapes[0]], (right_line_location-left_line_location)/(2*grid_size)-1 , 0, colors[next_colours[0]])
         text(1)
+        next_shapes.pop(0)
+        next_shapes.append(randint(0, len(possible_shapes)-1))
+        next_colours.pop(0)
+        next_colours.append(randint(0, len(colors)-1))
+        draw_next_shapes()
 
 ################################################################################################################################
 # checks if a horizontal row is full and deletes it if it's full
@@ -380,11 +443,6 @@ def rotate_left():
     shape = find_matrix()
     dummy = find_matrix()
 
-    print ("original shape")
-    for x in shape:
-        print (x)
-    print ("")
-
     # rotate it (magic)
     new_shape = list(zip(*shape[::-1]))
 
@@ -495,8 +553,9 @@ def start_game():
     create_board()
     text_value = canv.create_text((canvas_width+right_line_location)/2,30,fill="white",font="Times 20 italic bold",text="Score = " + str(score))
     draw_lines()
+    draw_next_shapes()
     starter = select_random_shape()
-    draw_chosen_shape(starter, (right_line_location-left_line_location)/(2*grid_size)-1 ,0)
+    draw_chosen_shape(starter, (right_line_location-left_line_location)/(2*grid_size)-1 ,0, colors[randint(0, len(colors)-1)])
     label = Label(root, text="Tetris")
     move_blocks(label)
     root.title("Tetris!")
